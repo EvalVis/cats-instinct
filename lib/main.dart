@@ -36,7 +36,9 @@ class _GameScreenState extends State<GameScreen> {
   Color _centerColor = Colors.blue;
   int _lastCenterColorIndex = -1;
   int _score = 0;
-  Timer? _timer;
+  Timer? _colorSwitchTimer;
+  Timer? _clickTimer;
+  int _timeRemaining = 60;
   final Random _random = Random();
 
   @override
@@ -44,11 +46,13 @@ class _GameScreenState extends State<GameScreen> {
     super.initState();
     _pickNewTargetColor();
     _startColorSwitching();
+    _startClickTimer();
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _colorSwitchTimer?.cancel();
+    _clickTimer?.cancel();
     super.dispose();
   }
 
@@ -64,7 +68,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _startColorSwitching() {
-    _timer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+    _colorSwitchTimer = Timer.periodic(const Duration(milliseconds: 500), (
+      timer,
+    ) {
       int newIndex;
       do {
         newIndex = _random.nextInt(_colors.length);
@@ -77,7 +83,28 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
+  void _startClickTimer() {
+    _clickTimer?.cancel();
+    _timeRemaining = 60;
+    _clickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_timeRemaining > 0) {
+          _timeRemaining--;
+        } else {
+          _score = 0;
+          _clickTimer?.cancel();
+          _startClickTimer();
+        }
+      });
+    });
+  }
+
+  void _resetClickTimer() {
+    _startClickTimer();
+  }
+
   void _onCenterSquareTap() {
+    _resetClickTimer();
     if (_centerColor == _targetColor) {
       setState(() {
         _score++;
@@ -128,6 +155,18 @@ class _GameScreenState extends State<GameScreen> {
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
                   ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 20,
+              right: 20,
+              child: Text(
+                '$_timeRemaining',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
