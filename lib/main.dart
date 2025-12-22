@@ -39,6 +39,7 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _colorSwitchTimer;
   Timer? _clickTimer;
   int _timeRemaining = 60;
+  double _colorSwitchDelay = 1000.0;
   final Random _random = Random();
 
   @override
@@ -68,19 +69,21 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _startColorSwitching() {
-    _colorSwitchTimer = Timer.periodic(const Duration(milliseconds: 500), (
-      timer,
-    ) {
-      int newIndex;
-      do {
-        newIndex = _random.nextInt(_colors.length);
-      } while (newIndex == _lastCenterColorIndex);
+    _colorSwitchTimer?.cancel();
+    _colorSwitchTimer = Timer.periodic(
+      Duration(milliseconds: _colorSwitchDelay.round()),
+      (timer) {
+        int newIndex;
+        do {
+          newIndex = _random.nextInt(_colors.length);
+        } while (newIndex == _lastCenterColorIndex);
 
-      setState(() {
-        _centerColor = _colors[newIndex];
-        _lastCenterColorIndex = newIndex;
-      });
-    });
+        setState(() {
+          _centerColor = _colors[newIndex];
+          _lastCenterColorIndex = newIndex;
+        });
+      },
+    );
   }
 
   void _startClickTimer() {
@@ -108,12 +111,19 @@ class _GameScreenState extends State<GameScreen> {
     if (_centerColor == _targetColor) {
       setState(() {
         _score++;
+        _colorSwitchDelay *= 0.99;
+        if (_colorSwitchDelay < 100) {
+          _colorSwitchDelay = 100;
+        }
       });
       _pickNewTargetColor();
+      _startColorSwitching();
     } else {
       setState(() {
         _score = 0;
+        _colorSwitchDelay = 1000.0;
       });
+      _startColorSwitching();
     }
   }
 
