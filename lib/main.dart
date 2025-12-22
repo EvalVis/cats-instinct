@@ -183,7 +183,7 @@ class _GameScreenState extends State<GameScreen> {
                 const SizedBox(height: 12),
                 _buildInstructionRow(
                   Icons.speed,
-                  'Each successful match increases the speed and your score.',
+                  'Each successful match increases the speed of colour switch.',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
