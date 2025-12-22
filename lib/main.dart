@@ -45,7 +45,7 @@ class _GameScreenState extends State<GameScreen> {
   double _colorSwitchDelay = 1000.0;
   bool _isGameStarted = false;
   bool _colorBlindMode = false;
-  final Random _random = Random();
+  final Random _random = Random.secure();
 
   final Map<Color, String> _colorSymbols = {
     Colors.red: '●',
@@ -165,13 +165,15 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _pickNewTargetColor() {
-    int newIndex;
-    do {
-      newIndex = _random.nextInt(_colors.length);
-    } while (_colors[newIndex] == _targetColor);
-
+    final availableColors = _colors
+        .where((color) => color != _targetColor)
+        .toList();
+    if (availableColors.isEmpty) {
+      availableColors.addAll(_colors);
+    }
+    availableColors.shuffle(_random);
     setState(() {
-      _targetColor = _colors[newIndex];
+      _targetColor = availableColors.first;
     });
   }
 
@@ -180,10 +182,15 @@ class _GameScreenState extends State<GameScreen> {
     _colorSwitchTimer = Timer.periodic(
       Duration(milliseconds: _colorSwitchDelay.round()),
       (timer) {
-        int newIndex;
-        do {
-          newIndex = _random.nextInt(_colors.length);
-        } while (newIndex == _lastCenterColorIndex);
+        final availableIndices = List.generate(
+          _colors.length,
+          (i) => i,
+        ).where((i) => i != _lastCenterColorIndex).toList();
+        if (availableIndices.isEmpty) {
+          availableIndices.addAll(List.generate(_colors.length, (i) => i));
+        }
+        availableIndices.shuffle(_random);
+        final newIndex = availableIndices.first;
 
         setState(() {
           _centerColor = _colors[newIndex];
