@@ -143,6 +143,91 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  void _showInstructions(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[850],
+          title: const Text(
+            'How to Play',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Match the Colors!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildInstructionRow(
+                  Icons.square,
+                  'Tap the center square when it matches the target color (top left).',
+                ),
+                const SizedBox(height: 12),
+                _buildInstructionRow(
+                  Icons.timer,
+                  'You have 60 seconds to match colors. Timer resets on each match.',
+                ),
+                const SizedBox(height: 12),
+                _buildInstructionRow(
+                  Icons.speed,
+                  'Each successful match increases the speed and your score.',
+                ),
+                const SizedBox(height: 12),
+                _buildInstructionRow(
+                  Icons.warning,
+                  'Wrong match resets your score and speed to starting values.',
+                ),
+                const SizedBox(height: 12),
+                _buildInstructionRow(
+                  Icons.trending_up,
+                  'The speed bar shows your current color switch speed (0 = fastest, 1000 = slowest).',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Got it!',
+                style: TextStyle(color: Colors.green, fontSize: 16),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildInstructionRow(IconData icon, String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Colors.green, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -212,6 +297,27 @@ class _GameScreenState extends State<GameScreen> {
                         bottom: Radius.circular(13),
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              bottom: 20,
+              left: 20,
+              child: GestureDetector(
+                onTap: () => _showInstructions(context),
+                child: Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey[600]!, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.help_outline,
+                    color: Colors.white,
+                    size: 28,
                   ),
                 ),
               ),
