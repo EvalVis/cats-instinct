@@ -174,12 +174,32 @@ class _GameScreenState extends State<GameScreen> {
             Positioned(
               top: 20,
               right: 20,
-              child: Text(
-                '$_timeRemaining',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
+              child: Container(
+                width: 30,
+                height: 300,
+                decoration: BoxDecoration(
+                  color: Colors.grey[800],
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(color: Colors.grey[600]!, width: 2),
+                ),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 100),
+                    curve: Curves.easeOut,
+                    width: 26,
+                    height: (_timeRemaining / 60.0) * 296,
+                    decoration: BoxDecoration(
+                      color: _timeRemaining > 30
+                          ? Colors.green
+                          : _timeRemaining > 10
+                          ? Colors.orange
+                          : Colors.red,
+                      borderRadius: const BorderRadius.vertical(
+                        bottom: Radius.circular(13),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
