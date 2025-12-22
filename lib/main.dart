@@ -41,6 +41,19 @@ class _GameScreenState extends State<GameScreen> {
   int _timeRemaining = 60;
   double _colorSwitchDelay = 1000.0;
   final Random _random = Random();
+  final List<int> _speedLabels = [
+    0,
+    100,
+    200,
+    300,
+    400,
+    500,
+    600,
+    700,
+    800,
+    900,
+    1000,
+  ];
 
   @override
   void initState() {
@@ -114,8 +127,8 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         _score += pointsGained;
         _colorSwitchDelay *= 0.99;
-        if (_colorSwitchDelay < 100) {
-          _colorSwitchDelay = 100;
+        if (_colorSwitchDelay < 0) {
+          _colorSwitchDelay = 0;
         }
       });
       _pickNewTargetColor();
@@ -204,23 +217,95 @@ class _GameScreenState extends State<GameScreen> {
               ),
             ),
             Center(
-              child: GestureDetector(
-                onTap: _onCenterSquareTap,
-                child: Container(
-                  width: 200,
-                  height: 200,
-                  decoration: BoxDecoration(
-                    color: _centerColor,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _centerColor.withValues(alpha: 0.5),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: _onCenterSquareTap,
+                    child: Container(
+                      width: 200,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: _centerColor,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _centerColor.withValues(alpha: 0.5),
+                            blurRadius: 20,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 60),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 50,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: _speedLabels.reversed.map((label) {
+                            return SizedBox(
+                              height: 26.0,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  label.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      SizedBox(
+                        width: 40,
+                        height: 260,
+                        child: Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey[800],
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.grey[600]!,
+                                  width: 2,
+                                ),
+                              ),
+                            ),
+                            Align(
+                              alignment: Alignment.bottomCenter,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeOut,
+                                width: 36,
+                                height:
+                                    ((1000 - _colorSwitchDelay) / 1000.0) * 256,
+                                decoration: BoxDecoration(
+                                  color: Colors.green,
+                                  borderRadius:
+                                      ((1000 - _colorSwitchDelay) / 1000.0) *
+                                              256 >
+                                          250
+                                      ? BorderRadius.circular(18)
+                                      : const BorderRadius.vertical(
+                                          bottom: Radius.circular(18),
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
           ],
