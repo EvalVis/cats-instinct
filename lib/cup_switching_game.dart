@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'widgets/speed_meter.dart';
 
 class CupSwitchingGame extends StatefulWidget {
   const CupSwitchingGame({super.key});
@@ -274,15 +275,26 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
             ),
             Expanded(
               child: Center(
-                child: Row(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    _buildCup(0, 0),
-                    const SizedBox(width: 20),
-                    _buildCup(1, 1),
-                    const SizedBox(width: 20),
-                    _buildCup(2, 2),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildCup(0, 0),
+                        const SizedBox(width: 20),
+                        _buildCup(1, 1),
+                        const SizedBox(width: 20),
+                        _buildCup(2, 2),
+                      ],
+                    ),
+                    const SizedBox(height: 40),
+                    SpeedMeter(
+                      currentDelay: _shuffleDelay,
+                      maxDelay: 600.0,
+                      minDelay: 100.0,
+                    ),
                   ],
                 ),
               ),

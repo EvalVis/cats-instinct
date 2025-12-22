@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'widgets/speed_meter.dart';
 
 class ColorMatchGame extends StatefulWidget {
   final bool colorBlindMode;
@@ -77,19 +78,6 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
     );
   }
 
-  final List<int> _speedLabels = [
-    0,
-    100,
-    200,
-    300,
-    400,
-    500,
-    600,
-    700,
-    800,
-    900,
-    1000,
-  ];
 
   @override
   void initState() {
@@ -396,92 +384,10 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                     child: _buildColorSquare(_centerColor, 200),
                   ),
                   const SizedBox(height: 60),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        double barWidth = constraints.maxWidth;
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: barWidth,
-                              height: 20,
-                              child: Stack(
-                                children: _speedLabels
-                                    .toList()
-                                    .asMap()
-                                    .entries
-                                    .map((entry) {
-                                      int index = entry.key;
-                                      int label = entry.value;
-                                      double availableWidth = barWidth - 36;
-                                      double position =
-                                          (index / 10.0) * availableWidth;
-                                      return Positioned(
-                                        left: position,
-                                        top: 0,
-                                        child: Text(
-                                          label.toString(),
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      );
-                                    })
-                                    .toList(),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            SizedBox(
-                              width: barWidth,
-                              height: 40,
-                              child: Stack(
-                                children: [
-                                  Container(
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: Colors.grey[600]!,
-                                        width: 2,
-                                      ),
-                                    ),
-                                  ),
-                                  Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 300,
-                                      ),
-                                      curve: Curves.easeOut,
-                                      width:
-                                          ((1000 - _colorSwitchDelay) /
-                                              1000.0) *
-                                          (barWidth - 4),
-                                      height: 36,
-                                      decoration: BoxDecoration(
-                                        color: Colors.green,
-                                        borderRadius:
-                                            ((1000 - _colorSwitchDelay) /
-                                                        1000.0) *
-                                                    (barWidth - 4) >
-                                                (barWidth - 8)
-                                            ? BorderRadius.circular(18)
-                                            : const BorderRadius.horizontal(
-                                                left: Radius.circular(18),
-                                              ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
+                  SpeedMeter(
+                    currentDelay: _colorSwitchDelay,
+                    maxDelay: 1000.0,
+                    minDelay: 0.0,
                   ),
                 ],
               ),
