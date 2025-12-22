@@ -299,39 +299,36 @@ class _GameScreenState extends State<GameScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned(
-              top: 20,
-              right: 20,
-              child: Container(
-                width: 30,
-                height: 300,
-                decoration: BoxDecoration(
-                  color: Colors.grey[800],
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.grey[600]!, width: 2),
-                ),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 100),
-                    curve: Curves.easeOut,
-                    width: 26,
-                    height: (_timeRemaining / 60.0) * 296,
-                    decoration: BoxDecoration(
-                      color: _timeRemaining > 30
-                          ? Colors.green
-                          : _timeRemaining > 10
-                          ? Colors.orange
-                          : Colors.red,
-                      borderRadius: const BorderRadius.vertical(
-                        bottom: Radius.circular(13),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: 300,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: Colors.grey[600]!, width: 2),
+                      ),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 100),
+                          curve: Curves.easeOut,
+                          width: (_timeRemaining / 60.0) * 296,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: _timeRemaining > 30
+                                ? Colors.green
+                                : _timeRemaining > 10
+                                ? Colors.orange
+                                : Colors.red,
+                            borderRadius: const BorderRadius.horizontal(
+                              left: Radius.circular(13),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -379,77 +376,92 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                   ),
                   const SizedBox(height: 60),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 50,
-                        height: 260,
-                        child: Stack(
-                          children: _speedLabels.reversed
-                              .toList()
-                              .asMap()
-                              .entries
-                              .map((entry) {
-                                int index = entry.key;
-                                int label = entry.value;
-                                double position = (index / 10.0) * (260 - 12);
-                                return Positioned(
-                                  top: position,
-                                  right: 0,
-                                  child: Text(
-                                    label.toString(),
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                );
-                              })
-                              .toList(),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 40,
-                        height: 260,
-                        child: Stack(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double barWidth = constraints.maxWidth;
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[800],
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.grey[600]!,
-                                  width: 2,
-                                ),
+                            SizedBox(
+                              width: barWidth,
+                              height: 20,
+                              child: Stack(
+                                children: _speedLabels
+                                    .toList()
+                                    .asMap()
+                                    .entries
+                                    .map((entry) {
+                                      int index = entry.key;
+                                      int label = entry.value;
+                                      double availableWidth = barWidth - 36;
+                                      double position =
+                                          (index / 10.0) * availableWidth;
+                                      return Positioned(
+                                        left: position,
+                                        top: 0,
+                                        child: Text(
+                                          label.toString(),
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      );
+                                    })
+                                    .toList(),
                               ),
                             ),
-                            Align(
-                              alignment: Alignment.bottomCenter,
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeOut,
-                                width: 36,
-                                height:
-                                    ((1000 - _colorSwitchDelay) / 1000.0) * 256,
-                                decoration: BoxDecoration(
-                                  color: Colors.green,
-                                  borderRadius:
-                                      ((1000 - _colorSwitchDelay) / 1000.0) *
-                                              256 >
-                                          250
-                                      ? BorderRadius.circular(18)
-                                      : const BorderRadius.vertical(
-                                          bottom: Radius.circular(18),
-                                        ),
-                                ),
+                            const SizedBox(height: 10),
+                            SizedBox(
+                              width: barWidth,
+                              height: 40,
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[800],
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.grey[600]!,
+                                        width: 2,
+                                      ),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 300,
+                                      ),
+                                      curve: Curves.easeOut,
+                                      width:
+                                          ((1000 - _colorSwitchDelay) /
+                                              1000.0) *
+                                          (barWidth - 4),
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: Colors.green,
+                                        borderRadius:
+                                            ((1000 - _colorSwitchDelay) /
+                                                        1000.0) *
+                                                    (barWidth - 4) >
+                                                (barWidth - 8)
+                                            ? BorderRadius.circular(18)
+                                            : const BorderRadius.horizontal(
+                                                left: Radius.circular(18),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                    ],
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
