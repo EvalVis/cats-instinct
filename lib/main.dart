@@ -244,23 +244,29 @@ class _GameScreenState extends State<GameScreen> {
                     children: [
                       SizedBox(
                         width: 50,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: _speedLabels.reversed.map((label) {
-                            return SizedBox(
-                              height: 26.0,
-                              child: Align(
-                                alignment: Alignment.centerRight,
-                                child: Text(
-                                  label.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                        height: 260,
+                        child: Stack(
+                          children: _speedLabels.reversed
+                              .toList()
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                int index = entry.key;
+                                int label = entry.value;
+                                double position = (index / 10.0) * (260 - 12);
+                                return Positioned(
+                                  top: position,
+                                  right: 0,
+                                  child: Text(
+                                    label.toString(),
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                    ),
                                   ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                                );
+                              })
+                              .toList(),
                         ),
                       ),
                       const SizedBox(width: 10),
