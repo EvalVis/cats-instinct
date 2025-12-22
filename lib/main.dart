@@ -44,7 +44,53 @@ class _GameScreenState extends State<GameScreen> {
   int _timeRemaining = 60;
   double _colorSwitchDelay = 1000.0;
   bool _isGameStarted = false;
+  bool _colorBlindMode = false;
   final Random _random = Random();
+
+  final Map<Color, String> _colorSymbols = {
+    Colors.red: '●',
+    Colors.blue: '■',
+    Colors.yellow: '▲',
+    Colors.green: '◆',
+    Colors.orange: '★',
+    Colors.purple: '▼',
+  };
+
+  String _getColorSymbol(Color color) {
+    return _colorSymbols[color] ?? '';
+  }
+
+  Widget _buildColorSquare(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.5),
+            blurRadius: 20,
+            spreadRadius: 5,
+          ),
+        ],
+      ),
+      child: _colorBlindMode
+          ? Center(
+              child: Text(
+                _getColorSymbol(color),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  shadows: [Shadow(color: Colors.black, blurRadius: 4)],
+                ),
+              ),
+            )
+          : null,
+    );
+  }
+
   final List<int> _speedLabels = [
     0,
     100,
@@ -63,6 +109,22 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _loadHighScore();
+    _loadColorBlindMode();
+  }
+
+  Future<void> _loadColorBlindMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _colorBlindMode = prefs.getBool('color_blind_mode') ?? false;
+    });
+  }
+
+  Future<void> _saveColorBlindMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('color_blind_mode', value);
+    setState(() {
+      _colorBlindMode = value;
+    });
   }
 
   void _startGame() {
@@ -272,11 +334,27 @@ class _GameScreenState extends State<GameScreen> {
               'Chameleon Effect - Boost your reflexes',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 32,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 60),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Color Blind Mode:',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(width: 12),
+                Switch(
+                  value: _colorBlindMode,
+                  onChanged: (value) => _saveColorBlindMode(value),
+                  activeColor: Colors.green,
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
             SizedBox(
               width: 200,
               height: 50,
@@ -337,21 +415,7 @@ class _GameScreenState extends State<GameScreen> {
             Positioned(
               top: 20,
               left: 20,
-              child: Container(
-                width: 75,
-                height: 75,
-                decoration: BoxDecoration(
-                  color: _targetColor,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _targetColor.withValues(alpha: 0.5),
-                      blurRadius: 20,
-                      spreadRadius: 5,
-                    ),
-                  ],
-                ),
-              ),
+              child: _buildColorSquare(_targetColor, 75),
             ),
             Positioned(
               top: 20,
@@ -437,21 +501,7 @@ class _GameScreenState extends State<GameScreen> {
                 children: [
                   GestureDetector(
                     onTap: _onCenterSquareTap,
-                    child: Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: _centerColor,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _centerColor.withValues(alpha: 0.5),
-                            blurRadius: 20,
-                            spreadRadius: 5,
-                          ),
-                        ],
-                      ),
-                    ),
+                    child: _buildColorSquare(_centerColor, 200),
                   ),
                   const SizedBox(height: 60),
                   Padding(
