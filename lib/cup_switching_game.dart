@@ -18,6 +18,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
   bool _isAnimating = false;
   bool _canGuess = false;
   bool _showBean = false;
+  double _shuffleDelay = 600.0;
   final List<int> _cupPositions = [0, 1, 2];
   int? _swappingIndex1;
   int? _swappingIndex2;
@@ -94,7 +95,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
   Future<void> _shuffleCups() async {
     const shuffleCount = 5;
     for (int i = 0; i < shuffleCount; i++) {
-      await Future.delayed(const Duration(milliseconds: 600));
+      await Future.delayed(Duration(milliseconds: _shuffleDelay.round()));
       if (!mounted) return;
 
       final cup1 = _random.nextInt(3);
@@ -154,12 +155,17 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
       if (isCorrect) {
         setState(() {
           _score++;
+          _shuffleDelay *= 0.99;
+          if (_shuffleDelay < 100) {
+            _shuffleDelay = 100;
+          }
         });
         _saveHighScore(_score);
         _startNewRound();
       } else {
         setState(() {
           _score = 0;
+          _shuffleDelay = 600.0;
         });
         _startNewRound();
       }
@@ -212,7 +218,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
                       width: 30,
                       height: 30,
                       decoration: const BoxDecoration(
-                        color: Colors.yellow,
+                        color: Colors.white,
                         shape: BoxShape.circle,
                       ),
                     ),
