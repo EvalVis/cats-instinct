@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+enum GameType { colorMatch, cupSwitching }
+
 void main() {
   runApp(const MainApp());
 }
@@ -13,18 +15,165 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(home: GameScreen());
+    return const MaterialApp(home: MenuScreen());
   }
 }
 
-class GameScreen extends StatefulWidget {
-  const GameScreen({super.key});
+class MenuScreen extends StatefulWidget {
+  const MenuScreen({super.key});
 
   @override
-  State<GameScreen> createState() => _GameScreenState();
+  State<MenuScreen> createState() => _MenuScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _MenuScreenState extends State<MenuScreen> {
+  bool _colorBlindMode = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadColorBlindMode();
+  }
+
+  Future<void> _loadColorBlindMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _colorBlindMode = prefs.getBool('color_blind_mode') ?? false;
+    });
+  }
+
+  Future<void> _saveColorBlindMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('color_blind_mode', value);
+    setState(() {
+      _colorBlindMode = value;
+    });
+  }
+
+  void _startGame(GameType gameType) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => gameType == GameType.colorMatch
+            ? ColorMatchGame(colorBlindMode: _colorBlindMode)
+            : CupSwitchingGame(),
+      ),
+    );
+  }
+
+  void _quitGame() {
+    SystemNavigator.pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[900],
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'Chameleon Effect - Boost your reflexes',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 60),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Color Blind Mode:',
+                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                  ),
+                  const SizedBox(width: 12),
+                  Switch(
+                    value: _colorBlindMode,
+                    onChanged: _saveColorBlindMode,
+                    activeColor: Colors.green,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => _startGame(GameType.colorMatch),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Color Match',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () => _startGame(GameType.cupSwitching),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Cup Switching',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _quitGame,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey[800],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Quit',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ColorMatchGame extends StatefulWidget {
+  final bool colorBlindMode;
+
+  const ColorMatchGame({super.key, required this.colorBlindMode});
+
+  @override
+  State<ColorMatchGame> createState() => _ColorMatchGameState();
+}
+
+class _ColorMatchGameState extends State<ColorMatchGame> {
   final List<Color> _colors = [
     Colors.red,
     Colors.blue,
@@ -43,8 +192,6 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _clickTimer;
   int _timeRemaining = 60;
   double _colorSwitchDelay = 1000.0;
-  bool _isGameStarted = false;
-  bool _colorBlindMode = false;
   final Random _random = Random.secure();
 
   final Map<Color, String> _colorSymbols = {
@@ -75,7 +222,7 @@ class _GameScreenState extends State<GameScreen> {
           ),
         ],
       ),
-      child: _colorBlindMode
+      child: widget.colorBlindMode
           ? Center(
               child: Text(
                 _getColorSymbol(color),
@@ -109,35 +256,9 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _loadHighScore();
-    _loadColorBlindMode();
-  }
-
-  Future<void> _loadColorBlindMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _colorBlindMode = prefs.getBool('color_blind_mode') ?? false;
-    });
-  }
-
-  Future<void> _saveColorBlindMode(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('color_blind_mode', value);
-    setState(() {
-      _colorBlindMode = value;
-    });
-  }
-
-  void _startGame() {
-    setState(() {
-      _isGameStarted = true;
-    });
     _pickNewTargetColor();
     _startColorSwitching();
     _startClickTimer();
-  }
-
-  void _quitGame() {
-    SystemNavigator.pop();
   }
 
   Future<void> _loadHighScore() async {
@@ -330,91 +451,16 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
-  Widget _buildMenu() {
-    return Container(
-      color: Colors.grey[900],
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Chameleon Effect - Boost your reflexes',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 60),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Color Blind Mode:',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
-                ),
-                const SizedBox(width: 12),
-                Switch(
-                  value: _colorBlindMode,
-                  onChanged: (value) => _saveColorBlindMode(value),
-                  activeColor: Colors.green,
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-            SizedBox(
-              width: 200,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _startGame,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Play',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: 200,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _quitGame,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[800],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Quit',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (!_isGameStarted) {
-      return Scaffold(
-        backgroundColor: Colors.grey[900],
-        body: SafeArea(child: _buildMenu()),
-      );
-    }
-
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.grey[900],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
       backgroundColor: Colors.grey[900],
       body: SafeArea(
         child: Stack(
@@ -599,6 +645,304 @@ class _GameScreenState extends State<GameScreen> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class CupSwitchingGame extends StatefulWidget {
+  const CupSwitchingGame({super.key});
+
+  @override
+  State<CupSwitchingGame> createState() => _CupSwitchingGameState();
+}
+
+class _CupSwitchingGameState extends State<CupSwitchingGame>
+    with TickerProviderStateMixin {
+  int _score = 0;
+  int _highScore = 0;
+  int _beanPosition = 0;
+  bool _isAnimating = false;
+  bool _canGuess = false;
+  bool _showBean = false;
+  final List<int> _cupPositions = [0, 1, 2];
+  int? _swappingIndex1;
+  int? _swappingIndex2;
+  final Random _random = Random.secure();
+  late List<AnimationController> _animationControllers;
+  late List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHighScore();
+    _animationControllers = List.generate(
+      3,
+      (index) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 500),
+      ),
+    );
+    _animations = _animationControllers
+        .map(
+          (controller) => Tween<double>(begin: 0, end: 1).animate(
+            CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+          ),
+        )
+        .toList();
+    _startNewRound();
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _animationControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _loadHighScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _highScore = prefs.getInt('cup_game_high_score') ?? 0;
+    });
+  }
+
+  Future<void> _saveHighScore(int score) async {
+    if (score > _highScore) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('cup_game_high_score', score);
+      setState(() {
+        _highScore = score;
+      });
+    }
+  }
+
+  void _startNewRound() {
+    setState(() {
+      _beanPosition = _random.nextInt(3);
+      _canGuess = false;
+      _isAnimating = false;
+      _showBean = true;
+    });
+    _showBeanThenShuffle();
+  }
+
+  Future<void> _showBeanThenShuffle() async {
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+    setState(() {
+      _showBean = false;
+      _isAnimating = true;
+    });
+    _shuffleCups();
+  }
+
+  Future<void> _shuffleCups() async {
+    const shuffleCount = 5;
+    for (int i = 0; i < shuffleCount; i++) {
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
+
+      final cup1 = _random.nextInt(3);
+      int cup2 = _random.nextInt(3);
+      while (cup2 == cup1) {
+        cup2 = _random.nextInt(3);
+      }
+
+      await _swapCups(cup1, cup2);
+    }
+
+    setState(() {
+      _isAnimating = false;
+      _canGuess = true;
+    });
+  }
+
+  Future<void> _swapCups(int physicalIndex1, int physicalIndex2) async {
+    final controller1 = _animationControllers[physicalIndex1];
+    final controller2 = _animationControllers[physicalIndex2];
+
+    setState(() {
+      _swappingIndex1 = physicalIndex1;
+      _swappingIndex2 = physicalIndex2;
+    });
+
+    controller1.reset();
+    controller2.reset();
+
+    await Future.wait([controller1.forward(), controller2.forward()]);
+
+    setState(() {
+      final temp = _cupPositions[physicalIndex1];
+      _cupPositions[physicalIndex1] = _cupPositions[physicalIndex2];
+      _cupPositions[physicalIndex2] = temp;
+      _swappingIndex1 = null;
+      _swappingIndex2 = null;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 50));
+    controller1.reset();
+    controller2.reset();
+  }
+
+  void _onCupTap(int tappedIndex) {
+    if (!_canGuess || _isAnimating) return;
+
+    final actualPosition = _cupPositions[tappedIndex];
+    final isCorrect = actualPosition == _beanPosition;
+
+    setState(() {
+      _canGuess = false;
+    });
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      if (isCorrect) {
+        setState(() {
+          _score++;
+        });
+        _saveHighScore(_score);
+        _startNewRound();
+      } else {
+        setState(() {
+          _score = 0;
+        });
+        _startNewRound();
+      }
+    });
+  }
+
+  Widget _buildCup(int physicalIndex, int cupNumber) {
+    final logicalPosition = _cupPositions[physicalIndex];
+    final hasBean = logicalPosition == _beanPosition && _showBean;
+    final animation = _animations[physicalIndex];
+    final isSwapping =
+        _swappingIndex1 == physicalIndex || _swappingIndex2 == physicalIndex;
+    final swapPartner = _swappingIndex1 == physicalIndex
+        ? _swappingIndex2
+        : (_swappingIndex2 == physicalIndex ? _swappingIndex1 : null);
+
+    return GestureDetector(
+      onTap: () => _onCupTap(physicalIndex),
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (context, child) {
+          double offset = 0;
+          if (isSwapping && swapPartner != null) {
+            offset = (swapPartner - physicalIndex) * 120.0 * animation.value;
+          }
+          return Transform.translate(
+            offset: Offset(offset, 0),
+            child: Container(
+              width: 100,
+              height: 150,
+              decoration: BoxDecoration(
+                color: Colors.brown[700],
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(50),
+                  topRight: Radius.circular(50),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.brown[900]!,
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  if (hasBean)
+                    Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        color: Colors.yellow,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[900],
+      appBar: AppBar(
+        backgroundColor: Colors.grey[900],
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Cup Switching',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Text(
+                    'Score: $_score',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    'High Score: $_highScore',
+                    style: TextStyle(
+                      color: Colors.green[300],
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Center(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    _buildCup(0, 0),
+                    const SizedBox(width: 20),
+                    _buildCup(1, 1),
+                    const SizedBox(width: 20),
+                    _buildCup(2, 2),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                _showBean
+                    ? 'Watch where the bean goes...'
+                    : _isAnimating
+                    ? 'Watch the cups shuffle...'
+                    : _canGuess
+                    ? 'Tap the cup with the bean!'
+                    : 'Loading...',
+                style: const TextStyle(color: Colors.white70, fontSize: 18),
               ),
             ),
           ],
