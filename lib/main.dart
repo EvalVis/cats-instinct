@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MainApp());
@@ -36,6 +37,7 @@ class _GameScreenState extends State<GameScreen> {
   Color _centerColor = Colors.blue;
   int _lastCenterColorIndex = -1;
   double _score = 0.0;
+  double _highScore = 0.0;
   Timer? _colorSwitchTimer;
   Timer? _clickTimer;
   int _timeRemaining = 60;
@@ -58,9 +60,27 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    _loadHighScore();
     _pickNewTargetColor();
     _startColorSwitching();
     _startClickTimer();
+  }
+
+  Future<void> _loadHighScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _highScore = prefs.getDouble('high_score') ?? 0.0;
+    });
+  }
+
+  Future<void> _saveHighScore(double score) async {
+    if (score > _highScore) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('high_score', score);
+      setState(() {
+        _highScore = score;
+      });
+    }
   }
 
   @override
@@ -131,6 +151,7 @@ class _GameScreenState extends State<GameScreen> {
           _colorSwitchDelay = 0;
         }
       });
+      _saveHighScore(_score);
       _pickNewTargetColor();
       _startColorSwitching();
     } else {
@@ -259,13 +280,26 @@ class _GameScreenState extends State<GameScreen> {
               left: 0,
               right: 0,
               child: Center(
-                child: Text(
-                  'Score: ${_score.toStringAsFixed(1)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Score: ${_score.toStringAsFixed(1)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'High Score: ${_highScore.toStringAsFixed(1)}',
+                      style: TextStyle(
+                        color: Colors.green[300],
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
