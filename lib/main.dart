@@ -35,7 +35,7 @@ class _GameScreenState extends State<GameScreen> {
   Color _targetColor = Colors.red;
   Color _centerColor = Colors.blue;
   int _lastCenterColorIndex = -1;
-  int _score = 0;
+  double _score = 0.0;
   Timer? _colorSwitchTimer;
   Timer? _clickTimer;
   int _timeRemaining = 60;
@@ -94,7 +94,7 @@ class _GameScreenState extends State<GameScreen> {
         if (_timeRemaining > 0) {
           _timeRemaining--;
         } else {
-          _score = 0;
+          _score = 0.0;
           _clickTimer?.cancel();
           _startClickTimer();
         }
@@ -107,10 +107,12 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _onCenterSquareTap() {
-    _resetClickTimer();
     if (_centerColor == _targetColor) {
+      double timeBonus = _timeRemaining / 100.0;
+      double pointsGained = 1.0 + timeBonus;
+      _resetClickTimer();
       setState(() {
-        _score++;
+        _score += pointsGained;
         _colorSwitchDelay *= 0.99;
         if (_colorSwitchDelay < 100) {
           _colorSwitchDelay = 100;
@@ -119,8 +121,9 @@ class _GameScreenState extends State<GameScreen> {
       _pickNewTargetColor();
       _startColorSwitching();
     } else {
+      _resetClickTimer();
       setState(() {
-        _score = 0;
+        _score = 0.0;
         _colorSwitchDelay = 1000.0;
       });
       _startColorSwitching();
@@ -159,7 +162,7 @@ class _GameScreenState extends State<GameScreen> {
               right: 0,
               child: Center(
                 child: Text(
-                  'Score: $_score',
+                  'Score: ${_score.toStringAsFixed(1)}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 32,
