@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -42,6 +43,7 @@ class _GameScreenState extends State<GameScreen> {
   Timer? _clickTimer;
   int _timeRemaining = 60;
   double _colorSwitchDelay = 1000.0;
+  bool _isGameStarted = false;
   final Random _random = Random();
   final List<int> _speedLabels = [
     0,
@@ -61,9 +63,19 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _loadHighScore();
+  }
+
+  void _startGame() {
+    setState(() {
+      _isGameStarted = true;
+    });
     _pickNewTargetColor();
     _startColorSwitching();
     _startClickTimer();
+  }
+
+  void _quitGame() {
+    SystemNavigator.pop();
   }
 
   Future<void> _loadHighScore() async {
@@ -249,8 +261,74 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Widget _buildMenu() {
+    return Container(
+      color: Colors.grey[900],
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Chameleon Effect - Boost your reflexes',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 60),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _startGame,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Play',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _quitGame,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.grey[800],
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Quit',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (!_isGameStarted) {
+      return Scaffold(
+        backgroundColor: Colors.grey[900],
+        body: SafeArea(child: _buildMenu()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.grey[900],
       body: SafeArea(
