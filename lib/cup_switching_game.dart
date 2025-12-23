@@ -143,6 +143,34 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
     if (_groupSize > _cupCount) _groupSize = _cupCount;
   }
 
+  void _showHelp() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          title: const Text(
+            'How to play',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Watch the bean under a cup, then the cups shuffle. Tap the cup hiding the bean.\n\nEach correct guess speeds up shuffling, increases swaps, and adds cups over time. A wrong guess resets difficulty.',
+            style: TextStyle(color: Colors.white70, height: 1.4),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Got it',
+                style: TextStyle(color: Colors.greenAccent),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildCup({
     required int slotIndex,
     required double size,
@@ -211,6 +239,12 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
           'Cup Switching',
           style: TextStyle(color: Colors.white),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white),
+            onPressed: _showHelp,
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
