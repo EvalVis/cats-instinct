@@ -24,6 +24,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
   int _cupCount = 3;
   int _swapCount = 3;
   int _groupSize = 2;
+  double _animationDurationMs = 500.0;
   late List<int> _slotToCup;
   final Random _random = Random.secure();
 
@@ -120,6 +121,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
           _swapCount = 3;
           _groupSize = 2;
           _cupCount = 3;
+          _animationDurationMs = 500.0;
         });
         _startNewRound();
       }
@@ -131,6 +133,8 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
     if (roll == 0) {
       _shuffleDelay *= 0.9;
       if (_shuffleDelay < 100) _shuffleDelay = 100;
+      _animationDurationMs *= 0.9;
+      if (_animationDurationMs < 20) _animationDurationMs = 20;
     } else if (roll == 1) {
       if (_swapCount >= _cupCount && _cupCount < _cupCap) {
         _cupCount++;
@@ -163,7 +167,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
       center.dy + radius * sin(angle) - size / 2,
     );
     final animationDuration = Duration(
-      milliseconds: (_shuffleDelay.clamp(120, 500)).round(),
+      milliseconds: _animationDurationMs.clamp(20, 500).round(),
     );
     return AnimatedPositioned(
       key: ValueKey(cupId),
