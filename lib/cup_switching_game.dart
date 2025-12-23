@@ -142,9 +142,11 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       if (isCorrect) {
-        setState(() {
-          _score++;
-        });
+        if (!widget.sandbox) {
+          setState(() {
+            _score++;
+          });
+        }
         if (!widget.sandbox) {
           _applyDifficultyProgression();
           _saveHighScore(_score);
@@ -306,23 +308,25 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
                         style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
                     ),
-                  if (widget.sandbox) const SizedBox(height: 12),
-                  Text(
-                    'Score: $_score',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
+                  if (!widget.sandbox) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      'Score: $_score',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  Text(
-                    'High Score: $_highScore',
-                    style: TextStyle(
-                      color: Colors.green[300],
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
+                    Text(
+                      'High Score: $_highScore',
+                      style: TextStyle(
+                        color: Colors.green[300],
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
