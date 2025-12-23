@@ -4,8 +4,25 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/speed_meter.dart';
 
+class CupSandboxConfig {
+  final double shuffleDelay;
+  final int cupCount;
+  final int swapCount;
+  final int groupSize;
+
+  CupSandboxConfig({
+    required this.shuffleDelay,
+    required this.cupCount,
+    required this.swapCount,
+    required this.groupSize,
+  });
+}
+
 class CupSwitchingGame extends StatefulWidget {
-  const CupSwitchingGame({super.key});
+  final bool sandbox;
+  final CupSandboxConfig? sandboxConfig;
+
+  const CupSwitchingGame({super.key, this.sandbox = false, this.sandboxConfig});
 
   @override
   State<CupSwitchingGame> createState() => _CupSwitchingGameState();
@@ -25,12 +42,28 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
   int _swapCount = 3;
   int _groupSize = 2;
   double _animationDurationMs = 500.0;
+
+  double _initialAnimationDurationFor(double delay) {
+    final scaled = delay * 0.6;
+    return scaled.clamp(300, 1500);
+  }
+
   late List<int> _slotToCup;
   final Random _random = Random.secure();
 
   @override
   void initState() {
     super.initState();
+    if (widget.sandbox && widget.sandboxConfig != null) {
+      _shuffleDelay = widget.sandboxConfig!.shuffleDelay.clamp(20, 3000);
+      _cupCount = widget.sandboxConfig!.cupCount.clamp(3, _cupCap);
+      _swapCount = widget.sandboxConfig!.swapCount.clamp(1, _swapCap);
+      _groupSize = widget.sandboxConfig!.groupSize.clamp(
+        2,
+        widget.sandboxConfig!.cupCount,
+      );
+      _animationDurationMs = _initialAnimationDurationFor(_shuffleDelay);
+    }
     _slotToCup = List.generate(_cupCount, (index) => index);
     _loadHighScore();
     _startNewRound();
@@ -112,23 +145,28 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
         setState(() {
           _score++;
         });
-        _applyDifficultyProgression();
-        _saveHighScore(_score);
+        if (!widget.sandbox) {
+          _applyDifficultyProgression();
+          _saveHighScore(_score);
+        }
       } else {
-        setState(() {
-          _score = 0;
-          _shuffleDelay = 600.0;
-          _swapCount = 3;
-          _groupSize = 2;
-          _cupCount = 3;
-          _animationDurationMs = 500.0;
-        });
+        if (!widget.sandbox) {
+          setState(() {
+            _score = 0;
+            _shuffleDelay = 600.0;
+            _swapCount = 3;
+            _groupSize = 2;
+            _cupCount = 3;
+            _animationDurationMs = 500.0;
+          });
+        }
       }
       _startNewRound();
     });
   }
 
   void _applyDifficultyProgression() {
+    if (widget.sandbox) return;
     _shuffleDelay *= 0.9;
     if (_shuffleDelay < 100) _shuffleDelay = 100;
     _animationDurationMs *= 0.9;
@@ -185,7 +223,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
       center.dy + radius * sin(angle) - size / 2,
     );
     final animationDuration = Duration(
-      milliseconds: _animationDurationMs.clamp(20, 500).round(),
+      milliseconds: _animationDurationMs.clamp(20, 1500).round(),
     );
     return AnimatedPositioned(
       key: ValueKey(cupId),
@@ -253,6 +291,22 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  if (widget.sandbox)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blueGrey[800],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Sandbox mode',
+                        style: TextStyle(color: Colors.white70, fontSize: 14),
+                      ),
+                    ),
+                  if (widget.sandbox) const SizedBox(height: 12),
                   Text(
                     'Score: $_score',
                     style: const TextStyle(
@@ -307,7 +361,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: SpeedMeter(
                 currentDelay: _shuffleDelay,
-                maxDelay: 600.0,
+                maxDelay: widget.sandbox ? 3000.0 : 600.0,
                 minDelay: 100.0,
               ),
             ),
