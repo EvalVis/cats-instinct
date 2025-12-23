@@ -44,6 +44,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
   double _highScore = 0.0;
   Timer? _colorSwitchTimer;
   Timer? _clickTimer;
+  int _timerDuration = 60;
   int _timeRemaining = 60;
   double _colorSwitchDelay = 1000.0;
   int _colorCount = 6;
@@ -180,7 +181,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
 
   void _startClickTimer() {
     _clickTimer?.cancel();
-    _timeRemaining = 60;
+    _timeRemaining = _timerDuration.clamp(1, 120);
     _clickTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {
         if (_timeRemaining > 0) {
@@ -234,6 +235,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
     const double maxDelay = 3000;
     double speed = 1 - ((_colorSwitchDelay - minDelay) / (maxDelay - minDelay));
     int colorCount = _colorCount;
+    int timerSeconds = _timerDuration;
 
     showModalBottomSheet(
       context: context,
@@ -283,6 +285,16 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                     onChanged: (v) =>
                         setModalState(() => colorCount = v.round()),
                   ),
+                  _SliderRow(
+                    label: 'Timer (seconds)',
+                    value: timerSeconds.toDouble(),
+                    min: 5,
+                    max: 120,
+                    divisions: 23,
+                    displayValue: '$timerSeconds s',
+                    onChanged: (v) =>
+                        setModalState(() => timerSeconds = v.round()),
+                  ),
                   const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
@@ -296,10 +308,12 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                             maxDelay,
                           );
                           _colorCount = colorCount;
+                          _timerDuration = timerSeconds.clamp(5, 120);
                           _updateColorList();
                         });
                         _colorSwitchTimer?.cancel();
                         _startColorSwitching();
+                        _startClickTimer();
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -362,7 +376,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                 const SizedBox(height: 12),
                 _buildInstructionRow(
                   Icons.timer,
-                  'You have 60 seconds to match colors. Timer resets on each match.',
+                  'Match colors before the timer runs out. Timer resets on each match.',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
@@ -493,7 +507,8 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 100),
                           curve: Curves.easeOut,
-                          width: (_timeRemaining / 60.0) * 296,
+                          width: (_timeRemaining / _timerDuration.clamp(1, 120)) *
+                              296,
                           height: 26,
                           decoration: BoxDecoration(
                             color: _timeRemaining > 30
