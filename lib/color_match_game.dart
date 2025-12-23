@@ -460,21 +460,6 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (widget.sandbox)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.blueGrey[800],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Text(
-                          'Sandbox mode',
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                        ),
-                      ),
                     if (!widget.sandbox) ...[
                       Text(
                         'Score: ${_score.toStringAsFixed(1)}',
@@ -507,7 +492,8 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 100),
                           curve: Curves.easeOut,
-                          width: (_timeRemaining / _timerDuration.clamp(1, 120)) *
+                          width:
+                              (_timeRemaining / _timerDuration.clamp(1, 120)) *
                               296,
                           height: 26,
                           decoration: BoxDecoration(
