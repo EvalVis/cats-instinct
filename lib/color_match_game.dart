@@ -93,7 +93,6 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
     );
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -267,7 +266,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                     value: speed,
                     min: 0,
                     max: 1,
-                    divisions: 10,
+                    divisions: 99,
                     displayValue:
                         '${(maxDelay - speed * (maxDelay - minDelay)).round()} ms',
                     onChanged: (v) => setModalState(() {
@@ -281,7 +280,8 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                     max: 6,
                     divisions: 4,
                     displayValue: '$colorCount',
-                    onChanged: (v) => setModalState(() => colorCount = v.round()),
+                    onChanged: (v) =>
+                        setModalState(() => colorCount = v.round()),
                   ),
                   const SizedBox(height: 12),
                   SizedBox(
@@ -291,7 +291,10 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                         final newDelay =
                             maxDelay - speed * (maxDelay - minDelay);
                         setState(() {
-                          _colorSwitchDelay = newDelay.clamp(minDelay, maxDelay);
+                          _colorSwitchDelay = newDelay.clamp(
+                            minDelay,
+                            maxDelay,
+                          );
                           _colorCount = colorCount;
                           _updateColorList();
                         });
