@@ -433,21 +433,6 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  if (widget.sandbox)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.blueGrey[800],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Sandbox mode',
-                        style: TextStyle(color: Colors.white70, fontSize: 14),
-                      ),
-                    ),
                   if (!widget.sandbox) ...[
                     const SizedBox(height: 12),
                     Text(
