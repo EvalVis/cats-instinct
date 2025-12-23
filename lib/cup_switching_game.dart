@@ -104,8 +104,9 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
     final isCorrect = tappedCupId == _beanCupId;
     setState(() {
       _canGuess = false;
+      _showBean = true;
     });
-    Future.delayed(const Duration(milliseconds: 500), () {
+    Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
       if (isCorrect) {
         setState(() {
@@ -113,7 +114,6 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
         });
         _applyDifficultyProgression();
         _saveHighScore(_score);
-        _startNewRound();
       } else {
         setState(() {
           _score = 0;
@@ -123,8 +123,8 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
           _cupCount = 3;
           _animationDurationMs = 500.0;
         });
-        _startNewRound();
       }
+      _startNewRound();
     });
   }
 
