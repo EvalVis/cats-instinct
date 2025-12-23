@@ -1,4 +1,4 @@
-package com.programmersdiary.chameleon_effect
+package com.programmersdiary.cats_instinct
 
 import io.flutter.embedding.android.FlutterActivity
 
