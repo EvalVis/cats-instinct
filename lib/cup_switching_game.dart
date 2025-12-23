@@ -12,7 +12,8 @@ class CupSwitchingGame extends StatefulWidget {
 }
 
 class _CupSwitchingGameState extends State<CupSwitchingGame> {
-  static const int _cupCount = 20;
+  static const int _cupCap = 20;
+  static const int _swapCap = 40;
   int _score = 0;
   int _highScore = 0;
   int _beanCupId = 0;
@@ -20,6 +21,9 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
   bool _canGuess = false;
   bool _showBean = false;
   double _shuffleDelay = 600.0;
+  int _cupCount = 3;
+  int _swapCount = 3;
+  int _groupSize = 2;
   late List<int> _slotToCup;
   final Random _random = Random.secure();
 
@@ -70,20 +74,21 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
   }
 
   Future<void> _shuffleCups() async {
-    const shuffleCount = 8;
-    for (int i = 0; i < shuffleCount; i++) {
+    for (int i = 0; i < _swapCount; i++) {
       await Future.delayed(Duration(milliseconds: _shuffleDelay.round()));
       if (!mounted) return;
-      final first = _random.nextInt(_cupCount);
-      int second = _random.nextInt(_cupCount);
-      while (second == first) {
-        second = _random.nextInt(_cupCount);
+      final count = _groupSize.clamp(2, _cupCount);
+      final indices = <int>{};
+      while (indices.length < count) {
+        indices.add(_random.nextInt(_cupCount));
       }
-      setState(() {
-        final temp = _slotToCup[first];
-        _slotToCup[first] = _slotToCup[second];
-        _slotToCup[second] = temp;
-      });
+      final list = indices.toList();
+      final temp = _slotToCup[list.last];
+      for (int j = list.length - 1; j > 0; j--) {
+        _slotToCup[list[j]] = _slotToCup[list[j - 1]];
+      }
+      _slotToCup[list.first] = temp;
+      setState(() {});
     }
     if (!mounted) return;
     setState(() {
@@ -104,21 +109,44 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
       if (isCorrect) {
         setState(() {
           _score++;
-          _shuffleDelay *= 0.99;
-          if (_shuffleDelay < 100) {
-            _shuffleDelay = 100;
-          }
         });
+        _applyDifficultyProgression();
         _saveHighScore(_score);
         _startNewRound();
       } else {
         setState(() {
           _score = 0;
           _shuffleDelay = 600.0;
+          _swapCount = 3;
+          _groupSize = 2;
+          _cupCount = 3;
         });
         _startNewRound();
       }
     });
+  }
+
+  void _applyDifficultyProgression() {
+    final roll = _random.nextInt(3);
+    if (roll == 0) {
+      _shuffleDelay *= 0.9;
+      if (_shuffleDelay < 100) _shuffleDelay = 100;
+    } else if (roll == 1) {
+      if (_swapCount >= _cupCount && _cupCount < _cupCap) {
+        _cupCount++;
+      } else if (_swapCount < _swapCap) {
+        _swapCount++;
+      }
+    } else {
+      if (_groupSize < _cupCount) {
+        _groupSize++;
+      } else if (_cupCount < _cupCap) {
+        _cupCount++;
+      }
+    }
+    if (_swapCount > _swapCap) _swapCount = _swapCap;
+    if (_cupCount > _cupCap) _cupCount = _cupCap;
+    if (_groupSize > _cupCount) _groupSize = _cupCount;
   }
 
   Widget _buildCup({
