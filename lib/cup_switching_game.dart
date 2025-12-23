@@ -129,24 +129,14 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
   }
 
   void _applyDifficultyProgression() {
-    final roll = _random.nextInt(3);
-    if (roll == 0) {
-      _shuffleDelay *= 0.9;
-      if (_shuffleDelay < 100) _shuffleDelay = 100;
-      _animationDurationMs *= 0.9;
-      if (_animationDurationMs < 20) _animationDurationMs = 20;
-    } else if (roll == 1) {
-      if (_swapCount >= _cupCount && _cupCount < _cupCap) {
-        _cupCount++;
-      } else if (_swapCount < _swapCap) {
-        _swapCount++;
-      }
-    } else {
-      if (_groupSize < _cupCount) {
-        _groupSize++;
-      } else if (_cupCount < _cupCap) {
-        _cupCount++;
-      }
+    _shuffleDelay *= 0.9;
+    if (_shuffleDelay < 100) _shuffleDelay = 100;
+    _animationDurationMs *= 0.9;
+    if (_animationDurationMs < 20) _animationDurationMs = 20;
+    if (_cupCount < _cupCap) _cupCount++;
+    if (_swapCount < _swapCap) _swapCount++;
+    if (_groupSize < _cupCount) {
+      _groupSize++;
     }
     if (_swapCount > _swapCap) _swapCount = _swapCap;
     if (_cupCount > _cupCap) _cupCount = _cupCap;
