@@ -435,12 +435,17 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        title: const Text('Color Match', style: TextStyle(color: Colors.white)),
         actions: [
           if (widget.sandbox)
             IconButton(
               icon: const Icon(Icons.settings, color: Colors.white),
               onPressed: _showSandboxSettings,
             ),
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white),
+            onPressed: () => _showInstructions(context),
+          ),
         ],
       ),
       backgroundColor: Colors.grey[900],
@@ -530,27 +535,6 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                       },
                     ),
                   ],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 20,
-              left: 20,
-              child: GestureDetector(
-                onTap: () => _showInstructions(context),
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.grey[600]!, width: 2),
-                  ),
-                  child: const Icon(
-                    Icons.help_outline,
-                    color: Colors.white,
-                    size: 28,
-                  ),
                 ),
               ),
             ),
