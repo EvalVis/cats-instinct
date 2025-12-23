@@ -89,7 +89,7 @@ class _MenuScreenState extends State<MenuScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'Chameleon Effect - Boost your reflexes',
+                'Cat\'s instinct - Boost your reflexes',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
