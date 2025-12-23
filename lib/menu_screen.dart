@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'color_match_game.dart';
 import 'cup_switching_game.dart';
 
@@ -69,6 +70,13 @@ class _MenuScreenState extends State<MenuScreen> {
 
   void _quitGame() {
     SystemNavigator.pop();
+  }
+
+  Future<void> _openSourceCode() async {
+    final uri = Uri.parse('https://github.com/EvalVis/cats-instinct');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -197,6 +205,18 @@ class _MenuScreenState extends State<MenuScreen> {
                   child: const Text(
                     'Quit',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              TextButton(
+                onPressed: _openSourceCode,
+                child: const Text(
+                  'Open source code',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    decoration: TextDecoration.underline,
                   ),
                 ),
               ),
