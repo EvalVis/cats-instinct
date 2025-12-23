@@ -54,14 +54,21 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
   @override
   void initState() {
     super.initState();
-    if (widget.sandbox && widget.sandboxConfig != null) {
-      _shuffleDelay = widget.sandboxConfig!.shuffleDelay.clamp(20, 3000);
-      _cupCount = widget.sandboxConfig!.cupCount.clamp(3, _cupCap);
-      _swapCount = widget.sandboxConfig!.swapCount.clamp(1, _swapCap);
-      _groupSize = widget.sandboxConfig!.groupSize.clamp(
-        2,
-        widget.sandboxConfig!.cupCount,
-      );
+    if (widget.sandbox) {
+      if (widget.sandboxConfig != null) {
+        _shuffleDelay = widget.sandboxConfig!.shuffleDelay.clamp(20, 3000);
+        _cupCount = widget.sandboxConfig!.cupCount.clamp(3, _cupCap);
+        _swapCount = widget.sandboxConfig!.swapCount.clamp(1, _swapCap);
+        _groupSize = widget.sandboxConfig!.groupSize.clamp(
+          2,
+          widget.sandboxConfig!.cupCount,
+        );
+      } else {
+        _shuffleDelay = 3000.0;
+        _cupCount = 3;
+        _swapCount = 3;
+        _groupSize = 2;
+      }
       _animationDurationMs = _initialAnimationDurationFor(_shuffleDelay);
     }
     _slotToCup = List.generate(_cupCount, (index) => index);
@@ -211,6 +218,134 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
     );
   }
 
+  void _showSandboxSettings() {
+    const double minDelay = 100;
+    const double maxDelay = 3000;
+    double speed = 1 - ((_shuffleDelay - minDelay) / (maxDelay - minDelay));
+    int cupCount = _cupCount;
+    int swapCount = _swapCount;
+    int groupSize = _groupSize;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            double groupMax = cupCount.toDouble();
+            if (groupSize > cupCount) groupSize = cupCount;
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Sandbox Settings',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SliderRow(
+                    label: 'Speed',
+                    value: speed,
+                    min: 0,
+                    max: 1,
+                    divisions: 10,
+                    displayValue:
+                        '${(maxDelay - speed * (maxDelay - minDelay)).round()} ms',
+                    onChanged: (v) => setModalState(() {
+                      speed = v;
+                    }),
+                  ),
+                  _SliderRow(
+                    label: 'Cup count',
+                    value: cupCount.toDouble(),
+                    min: 3,
+                    max: 20,
+                    divisions: 17,
+                    displayValue: '$cupCount',
+                    onChanged: (v) => setModalState(() {
+                      cupCount = v.round();
+                      if (groupSize > cupCount) groupSize = cupCount;
+                    }),
+                  ),
+                  _SliderRow(
+                    label: 'Swap count',
+                    value: swapCount.toDouble(),
+                    min: 1,
+                    max: 100,
+                    divisions: 99,
+                    displayValue: '$swapCount',
+                    onChanged: (v) =>
+                        setModalState(() => swapCount = v.round()),
+                  ),
+                  _SliderRow(
+                    label: 'Cups swapped together',
+                    value: groupSize.toDouble(),
+                    min: 2,
+                    max: groupMax,
+                    divisions: (groupMax - 2).clamp(0, 50).round(),
+                    displayValue: '$groupSize',
+                    onChanged: (v) =>
+                        setModalState(() => groupSize = v.round()),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final newDelay =
+                            maxDelay - speed * (maxDelay - minDelay);
+                        setState(() {
+                          _shuffleDelay = newDelay.clamp(minDelay, maxDelay);
+                          _cupCount = cupCount;
+                          _swapCount = swapCount;
+                          _groupSize = groupSize.clamp(2, cupCount);
+                          _animationDurationMs = _initialAnimationDurationFor(
+                            _shuffleDelay,
+                          );
+                          _slotToCup = List.generate(
+                            _cupCount,
+                            (index) => index,
+                          );
+                        });
+                        Navigator.pop(context);
+                        _startNewRound();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Apply Settings',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildCup({
     required int slotIndex,
     required double size,
@@ -280,6 +415,11 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
           style: TextStyle(color: Colors.white),
         ),
         actions: [
+          if (widget.sandbox)
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: _showSandboxSettings,
+            ),
           IconButton(
             icon: const Icon(Icons.help_outline, color: Colors.white),
             onPressed: _showHelp,
@@ -384,6 +524,64 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SliderRow extends StatelessWidget {
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String displayValue;
+  final ValueChanged<double> onChanged;
+
+  const _SliderRow({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.displayValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              Text(
+                displayValue,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: divisions == 0 ? null : divisions,
+            onChanged: onChanged,
+            activeColor: Colors.green,
+            inactiveColor: Colors.grey,
+          ),
+        ],
       ),
     );
   }

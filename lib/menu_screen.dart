@@ -48,133 +48,12 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  void _startSandbox(CupSandboxConfig config) {
+  void _startSandbox() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            CupSwitchingGame(sandbox: true, sandboxConfig: config),
+        builder: (context) => const CupSwitchingGame(sandbox: true),
       ),
-    );
-  }
-
-  void _openSandboxSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.grey[900],
-      isScrollControlled: true,
-      builder: (context) {
-        const double minDelay = 100;
-        const double maxDelay = 3000;
-        double speed = 0;
-        double delay = maxDelay - speed * (maxDelay - minDelay);
-        int cupCount = 3;
-        int swapCount = 3;
-        int groupSize = 2;
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            double groupMax = cupCount.toDouble();
-            if (groupSize > cupCount) groupSize = cupCount;
-            return Padding(
-              padding: EdgeInsets.only(
-                left: 16,
-                right: 16,
-                top: 16,
-                bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Sandbox Settings',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _SliderRow(
-                    label: 'Speed',
-                    value: speed,
-                    min: 0,
-                    max: 1,
-                    divisions: 10,
-                    displayValue: '${delay.round()} ms',
-                    onChanged: (v) => setModalState(() {
-                      speed = v;
-                      delay = maxDelay - speed * (maxDelay - minDelay);
-                    }),
-                  ),
-                  _SliderRow(
-                    label: 'Cup count',
-                    value: cupCount.toDouble(),
-                    min: 3,
-                    max: 20,
-                    divisions: 17,
-                    displayValue: '$cupCount',
-                    onChanged: (v) => setModalState(() {
-                      cupCount = v.round();
-                      if (groupSize > cupCount) groupSize = cupCount;
-                    }),
-                  ),
-                  _SliderRow(
-                    label: 'Swap count',
-                    value: swapCount.toDouble(),
-                    min: 1,
-                    max: 100,
-                    divisions: 99,
-                    displayValue: '$swapCount',
-                    onChanged: (v) =>
-                        setModalState(() => swapCount = v.round()),
-                  ),
-                  _SliderRow(
-                    label: 'Cups swapped together',
-                    value: groupSize.toDouble(),
-                    min: 2,
-                    max: groupMax,
-                    divisions: (groupMax - 2).clamp(0, 50).round(),
-                    displayValue: '$groupSize',
-                    onChanged: (v) =>
-                        setModalState(() => groupSize = v.round()),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _startSandbox(
-                          CupSandboxConfig(
-                            shuffleDelay: delay,
-                            cupCount: cupCount,
-                            swapCount: swapCount,
-                            groupSize: groupSize,
-                          ),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Start Sandbox',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -259,7 +138,7 @@ class _MenuScreenState extends State<MenuScreen> {
                 width: 200,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: _openSandboxSheet,
+                  onPressed: _startSandbox,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey,
                     foregroundColor: Colors.white,
@@ -295,64 +174,6 @@ class _MenuScreenState extends State<MenuScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _SliderRow extends StatelessWidget {
-  final String label;
-  final double value;
-  final double min;
-  final double max;
-  final int divisions;
-  final String displayValue;
-  final ValueChanged<double> onChanged;
-
-  const _SliderRow({
-    required this.label,
-    required this.value,
-    required this.min,
-    required this.max,
-    required this.divisions,
-    required this.displayValue,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(color: Colors.white70, fontSize: 14),
-              ),
-              Text(
-                displayValue,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          Slider(
-            value: value,
-            min: min,
-            max: max,
-            divisions: divisions == 0 ? null : divisions,
-            onChanged: onChanged,
-            activeColor: Colors.green,
-            inactiveColor: Colors.grey,
-          ),
-        ],
       ),
     );
   }
