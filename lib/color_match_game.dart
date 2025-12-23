@@ -449,65 +449,85 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
           children: [
             Positioned(
               top: 20,
-              left: 20,
-              child: _buildColorSquare(_targetColor, 75),
-            ),
-            Positioned(
-              top: 20,
               left: 0,
               right: 0,
-              child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (!widget.sandbox) ...[
-                      Text(
-                        'Score: ${_score.toStringAsFixed(1)}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'High Score: ${_highScore.toStringAsFixed(1)}',
-                        style: TextStyle(
-                          color: Colors.green[300],
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildColorSquare(_targetColor, 75),
+                        const SizedBox(width: 16),
+                        if (!widget.sandbox)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Score: ${_score.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'High Score: ${_highScore.toStringAsFixed(1)}',
+                                style: TextStyle(
+                                  color: Colors.green[300],
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
-                    Container(
-                      width: 300,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey[600]!, width: 2),
-                      ),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 100),
-                          curve: Curves.easeOut,
-                          width:
-                              (_timeRemaining / _timerDuration.clamp(1, 120)) *
-                              296,
-                          height: 26,
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final containerWidth = constraints.maxWidth;
+                        final borderWidth = 4.0;
+                        final innerWidth = containerWidth - borderWidth;
+                        return Container(
+                          width: double.infinity,
+                          height: 30,
                           decoration: BoxDecoration(
-                            color: _timeRemaining > 30
-                                ? Colors.green
-                                : _timeRemaining > 10
-                                ? Colors.orange
-                                : Colors.red,
-                            borderRadius: const BorderRadius.horizontal(
-                              left: Radius.circular(13),
+                            color: Colors.grey[800],
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.grey[600]!,
+                              width: 2,
                             ),
                           ),
-                        ),
-                      ),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 100),
+                              curve: Curves.easeOut,
+                              width:
+                                  (_timeRemaining /
+                                      _timerDuration.clamp(1, 120)) *
+                                  innerWidth,
+                              height: 26,
+                              decoration: BoxDecoration(
+                                color: _timeRemaining > 30
+                                    ? Colors.green
+                                    : _timeRemaining > 10
+                                    ? Colors.orange
+                                    : Colors.red,
+                                borderRadius: const BorderRadius.horizontal(
+                                  left: Radius.circular(13),
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
