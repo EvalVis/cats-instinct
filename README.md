@@ -1,3 +1,1 @@
-# chameleon_effect
-
-A new Flutter project.
+# cats_instinct
