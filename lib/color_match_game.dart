@@ -6,15 +6,29 @@ import 'widgets/speed_meter.dart';
 
 class ColorMatchGame extends StatefulWidget {
   final bool colorBlindMode;
+  final bool sandbox;
 
-  const ColorMatchGame({super.key, required this.colorBlindMode});
+  const ColorMatchGame({
+    super.key,
+    required this.colorBlindMode,
+    this.sandbox = false,
+  });
 
   @override
   State<ColorMatchGame> createState() => _ColorMatchGameState();
 }
 
 class _ColorMatchGameState extends State<ColorMatchGame> {
-  final List<Color> _colors = [
+  final List<Color> _allColors = [
+    Colors.red,
+    Colors.blue,
+    Colors.yellow,
+    Colors.green,
+    Colors.orange,
+    Colors.purple,
+  ];
+
+  List<Color> _colors = [
     Colors.red,
     Colors.blue,
     Colors.yellow,
@@ -32,6 +46,7 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
   Timer? _clickTimer;
   int _timeRemaining = 60;
   double _colorSwitchDelay = 1000.0;
+  int _colorCount = 6;
   final Random _random = Random.secure();
 
   final Map<Color, String> _colorSymbols = {
@@ -82,10 +97,26 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
   @override
   void initState() {
     super.initState();
+    if (widget.sandbox) {
+      _colorCount = 6;
+      _colorSwitchDelay = 1000.0;
+      _updateColorList();
+    }
     _loadHighScore();
     _pickNewTargetColor();
     _startColorSwitching();
     _startClickTimer();
+  }
+
+  void _updateColorList() {
+    _colors = _allColors.take(_colorCount).toList();
+    if (!_colors.contains(_targetColor)) {
+      _targetColor = _colors.first;
+    }
+    if (!_colors.contains(_centerColor)) {
+      _centerColor = _colors.first;
+      _lastCenterColorIndex = 0;
+    }
   }
 
   Future<void> _loadHighScore() async {
@@ -170,27 +201,127 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
 
   void _onCenterSquareTap() {
     if (_centerColor == _targetColor) {
-      double timeBonus = _timeRemaining / 100.0;
-      double pointsGained = 1.0 + timeBonus;
-      _resetClickTimer();
-      setState(() {
-        _score += pointsGained;
-        _colorSwitchDelay *= 0.99;
-        if (_colorSwitchDelay < 0) {
-          _colorSwitchDelay = 0;
-        }
-      });
-      _saveHighScore(_score);
+      if (!widget.sandbox) {
+        double timeBonus = _timeRemaining / 100.0;
+        double pointsGained = 1.0 + timeBonus;
+        _resetClickTimer();
+        setState(() {
+          _score += pointsGained;
+          _colorSwitchDelay *= 0.99;
+          if (_colorSwitchDelay < 0) {
+            _colorSwitchDelay = 0;
+          }
+        });
+        _saveHighScore(_score);
+      } else {
+        _resetClickTimer();
+      }
       _pickNewTargetColor();
       _startColorSwitching();
     } else {
       _resetClickTimer();
-      setState(() {
-        _score = 0.0;
-        _colorSwitchDelay = 1000.0;
-      });
+      if (!widget.sandbox) {
+        setState(() {
+          _score = 0.0;
+          _colorSwitchDelay = 1000.0;
+        });
+      }
       _startColorSwitching();
     }
+  }
+
+  void _showSandboxSettings() {
+    const double minDelay = 100;
+    const double maxDelay = 3000;
+    double speed = 1 - ((_colorSwitchDelay - minDelay) / (maxDelay - minDelay));
+    int colorCount = _colorCount;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.grey[900],
+      isScrollControlled: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: 16 + MediaQuery.of(context).viewInsets.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Sandbox Settings',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SliderRow(
+                    label: 'Speed',
+                    value: speed,
+                    min: 0,
+                    max: 1,
+                    divisions: 10,
+                    displayValue:
+                        '${(maxDelay - speed * (maxDelay - minDelay)).round()} ms',
+                    onChanged: (v) => setModalState(() {
+                      speed = v;
+                    }),
+                  ),
+                  _SliderRow(
+                    label: 'Color count',
+                    value: colorCount.toDouble(),
+                    min: 2,
+                    max: 6,
+                    divisions: 4,
+                    displayValue: '$colorCount',
+                    onChanged: (v) => setModalState(() => colorCount = v.round()),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final newDelay =
+                            maxDelay - speed * (maxDelay - minDelay);
+                        setState(() {
+                          _colorSwitchDelay = newDelay.clamp(minDelay, maxDelay);
+                          _colorCount = colorCount;
+                          _updateColorList();
+                        });
+                        _colorSwitchTimer?.cancel();
+                        _startColorSwitching();
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Apply Settings',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showInstructions(BuildContext context) {
@@ -287,6 +418,13 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          if (widget.sandbox)
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: _showSandboxSettings,
+            ),
+        ],
       ),
       backgroundColor: Colors.grey[900],
       body: SafeArea(
@@ -305,22 +443,39 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      'Score: ${_score.toStringAsFixed(1)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
+                    if (widget.sandbox)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blueGrey[800],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Sandbox mode',
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'High Score: ${_highScore.toStringAsFixed(1)}',
-                      style: TextStyle(
-                        color: Colors.green[300],
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                    if (!widget.sandbox) ...[
+                      Text(
+                        'Score: ${_score.toStringAsFixed(1)}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                      Text(
+                        'High Score: ${_highScore.toStringAsFixed(1)}',
+                        style: TextStyle(
+                          color: Colors.green[300],
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     Container(
                       width: 300,
@@ -386,14 +541,72 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
                   const SizedBox(height: 60),
                   SpeedMeter(
                     currentDelay: _colorSwitchDelay,
-                    maxDelay: 1000.0,
-                    minDelay: 0.0,
+                    maxDelay: widget.sandbox ? 3000.0 : 1000.0,
+                    minDelay: 100.0,
                   ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SliderRow extends StatelessWidget {
+  final String label;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String displayValue;
+  final ValueChanged<double> onChanged;
+
+  const _SliderRow({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.displayValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              Text(
+                displayValue,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: divisions == 0 ? null : divisions,
+            onChanged: onChanged,
+            activeColor: Colors.green,
+            inactiveColor: Colors.grey,
+          ),
+        ],
       ),
     );
   }

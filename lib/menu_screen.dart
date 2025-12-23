@@ -48,6 +48,16 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
+  void _startColorSandbox() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ColorMatchGame(colorBlindMode: _colorBlindMode, sandbox: true),
+      ),
+    );
+  }
+
   void _startSandbox() {
     Navigator.push(
       context,
@@ -129,6 +139,25 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                   child: const Text(
                     'Cup Switching',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _startColorSandbox,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[700],
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Color Sandbox',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
