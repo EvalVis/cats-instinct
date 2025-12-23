@@ -473,33 +473,26 @@ class _CupSwitchingGameState extends State<CupSwitchingGame> {
             Expanded(
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final mediaQuery = MediaQuery.of(context);
-                  final screenWidth = mediaQuery.size.width;
-                  final screenHeight = constraints.maxHeight;
-                  
-                  final isWideScreen = screenWidth > screenHeight * 1.5;
-                  final canvasSize = isWideScreen
-                      ? min(screenHeight * 0.8, screenWidth * 0.4)
-                      : min(constraints.maxWidth, constraints.maxHeight);
-                  
+                  final canvasSize = min(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  );
                   final baseCupSize = canvasSize * 0.12;
                   final cupSize = baseCupSize.clamp(28.0, 64.0);
                   final radius = (canvasSize * 0.42) - cupSize / 2;
                   final center = Offset(canvasSize / 2, canvasSize / 2);
-                  return Center(
-                    child: SizedBox(
-                      width: canvasSize,
-                      height: canvasSize,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: List.generate(
-                          _cupCount,
-                          (index) => _buildCup(
-                            slotIndex: index,
-                            size: cupSize.toDouble(),
-                            center: center,
-                            radius: radius,
-                          ),
+                  return SizedBox(
+                    width: canvasSize,
+                    height: canvasSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: List.generate(
+                        _cupCount,
+                        (index) => _buildCup(
+                          slotIndex: index,
+                          size: cupSize.toDouble(),
+                          center: center,
+                          radius: radius,
                         ),
                       ),
                     ),
