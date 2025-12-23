@@ -11,49 +11,24 @@ class CupSwitchingGame extends StatefulWidget {
   State<CupSwitchingGame> createState() => _CupSwitchingGameState();
 }
 
-class _CupSwitchingGameState extends State<CupSwitchingGame>
-    with TickerProviderStateMixin {
+class _CupSwitchingGameState extends State<CupSwitchingGame> {
+  static const int _cupCount = 20;
   int _score = 0;
   int _highScore = 0;
-  int _beanPosition = 0;
-  bool _isAnimating = false;
+  int _beanCupId = 0;
+  bool _isShuffling = false;
   bool _canGuess = false;
   bool _showBean = false;
   double _shuffleDelay = 600.0;
-  final List<int> _cupPositions = [0, 1, 2];
-  int? _swappingIndex1;
-  int? _swappingIndex2;
+  late List<int> _slotToCup;
   final Random _random = Random.secure();
-  late List<AnimationController> _animationControllers;
-  late List<Animation<double>> _animations;
 
   @override
   void initState() {
     super.initState();
+    _slotToCup = List.generate(_cupCount, (index) => index);
     _loadHighScore();
-    _animationControllers = List.generate(
-      3,
-      (index) => AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 500),
-      ),
-    );
-    _animations = _animationControllers
-        .map(
-          (controller) => Tween<double>(begin: 0, end: 1).animate(
-            CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-          ),
-        )
-        .toList();
     _startNewRound();
-  }
-
-  @override
-  void dispose() {
-    for (var controller in _animationControllers) {
-      controller.dispose();
-    }
-    super.dispose();
   }
 
   Future<void> _loadHighScore() async {
@@ -75,9 +50,10 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
 
   void _startNewRound() {
     setState(() {
-      _beanPosition = _random.nextInt(3);
+      _slotToCup = List.generate(_cupCount, (index) => index);
+      _beanCupId = _random.nextInt(_cupCount);
       _canGuess = false;
-      _isAnimating = false;
+      _isShuffling = false;
       _showBean = true;
     });
     _showBeanThenShuffle();
@@ -88,69 +64,41 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
     if (!mounted) return;
     setState(() {
       _showBean = false;
-      _isAnimating = true;
+      _isShuffling = true;
     });
     _shuffleCups();
   }
 
   Future<void> _shuffleCups() async {
-    const shuffleCount = 5;
+    const shuffleCount = 8;
     for (int i = 0; i < shuffleCount; i++) {
       await Future.delayed(Duration(milliseconds: _shuffleDelay.round()));
       if (!mounted) return;
-
-      final cup1 = _random.nextInt(3);
-      int cup2 = _random.nextInt(3);
-      while (cup2 == cup1) {
-        cup2 = _random.nextInt(3);
+      final first = _random.nextInt(_cupCount);
+      int second = _random.nextInt(_cupCount);
+      while (second == first) {
+        second = _random.nextInt(_cupCount);
       }
-
-      await _swapCups(cup1, cup2);
+      setState(() {
+        final temp = _slotToCup[first];
+        _slotToCup[first] = _slotToCup[second];
+        _slotToCup[second] = temp;
+      });
     }
-
+    if (!mounted) return;
     setState(() {
-      _isAnimating = false;
+      _isShuffling = false;
       _canGuess = true;
     });
   }
 
-  Future<void> _swapCups(int physicalIndex1, int physicalIndex2) async {
-    final controller1 = _animationControllers[physicalIndex1];
-    final controller2 = _animationControllers[physicalIndex2];
-
-    setState(() {
-      _swappingIndex1 = physicalIndex1;
-      _swappingIndex2 = physicalIndex2;
-    });
-
-    controller1.reset();
-    controller2.reset();
-
-    await Future.wait([controller1.forward(), controller2.forward()]);
-
-    setState(() {
-      final temp = _cupPositions[physicalIndex1];
-      _cupPositions[physicalIndex1] = _cupPositions[physicalIndex2];
-      _cupPositions[physicalIndex2] = temp;
-      _swappingIndex1 = null;
-      _swappingIndex2 = null;
-    });
-
-    await Future.delayed(const Duration(milliseconds: 50));
-    controller1.reset();
-    controller2.reset();
-  }
-
-  void _onCupTap(int tappedIndex) {
-    if (!_canGuess || _isAnimating) return;
-
-    final actualPosition = _cupPositions[tappedIndex];
-    final isCorrect = actualPosition == _beanPosition;
-
+  void _onCupTap(int slotIndex) {
+    if (!_canGuess || _isShuffling) return;
+    final tappedCupId = _slotToCup[slotIndex];
+    final isCorrect = tappedCupId == _beanCupId;
     setState(() {
       _canGuess = false;
     });
-
     Future.delayed(const Duration(milliseconds: 500), () {
       if (!mounted) return;
       if (isCorrect) {
@@ -173,61 +121,56 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
     });
   }
 
-  Widget _buildCup(int physicalIndex, int cupNumber) {
-    final logicalPosition = _cupPositions[physicalIndex];
-    final hasBean = logicalPosition == _beanPosition && _showBean;
-    final animation = _animations[physicalIndex];
-    final isSwapping =
-        _swappingIndex1 == physicalIndex || _swappingIndex2 == physicalIndex;
-    final swapPartner = _swappingIndex1 == physicalIndex
-        ? _swappingIndex2
-        : (_swappingIndex2 == physicalIndex ? _swappingIndex1 : null);
-
-    return GestureDetector(
-      onTap: () => _onCupTap(physicalIndex),
-      child: AnimatedBuilder(
-        animation: animation,
-        builder: (context, child) {
-          double offset = 0;
-          if (isSwapping && swapPartner != null) {
-            offset = (swapPartner - physicalIndex) * 120.0 * animation.value;
-          }
-          return Transform.translate(
-            offset: Offset(offset, 0),
-            child: Container(
-              width: 100,
-              height: 150,
-              decoration: BoxDecoration(
-                color: Colors.brown[700],
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(50),
-                  topRight: Radius.circular(50),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.brown[900]!,
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
+  Widget _buildCup({
+    required int slotIndex,
+    required double size,
+    required Offset center,
+    required double radius,
+  }) {
+    final cupId = _slotToCup[slotIndex];
+    final hasBean = cupId == _beanCupId && _showBean;
+    final angle = (2 * pi * slotIndex / _cupCount) - pi / 2;
+    final position = Offset(
+      center.dx + radius * cos(angle) - size / 2,
+      center.dy + radius * sin(angle) - size / 2,
+    );
+    final animationDuration = Duration(
+      milliseconds: (_shuffleDelay.clamp(120, 500)).round(),
+    );
+    return AnimatedPositioned(
+      key: ValueKey(cupId),
+      duration: animationDuration,
+      left: position.dx,
+      top: position.dy,
+      child: GestureDetector(
+        onTap: () => _onCupTap(slotIndex),
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: Colors.brown[600],
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.brown[900]!.withOpacity(0.6),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (hasBean)
-                    Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+            ],
+          ),
+          child: hasBean
+              ? Center(
+                  child: Container(
+                    width: size * 0.32,
+                    height: size * 0.32,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
                     ),
-                ],
-              ),
-            ),
-          );
-        },
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ),
       ),
     );
   }
@@ -274,29 +217,42 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
               ),
             ),
             Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        _buildCup(0, 0),
-                        const SizedBox(width: 20),
-                        _buildCup(1, 1),
-                        const SizedBox(width: 20),
-                        _buildCup(2, 2),
-                      ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final canvasSize = min(
+                    constraints.maxWidth,
+                    constraints.maxHeight,
+                  );
+                  final baseCupSize = canvasSize * 0.12;
+                  final cupSize = baseCupSize.clamp(28.0, 64.0);
+                  final radius = (canvasSize * 0.42) - cupSize / 2;
+                  final center = Offset(canvasSize / 2, canvasSize / 2);
+                  return SizedBox(
+                    width: canvasSize,
+                    height: canvasSize,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: List.generate(
+                        _cupCount,
+                        (index) => _buildCup(
+                          slotIndex: index,
+                          size: cupSize.toDouble(),
+                          center: center,
+                          radius: radius,
+                        ),
+                      ),
                     ),
-                    const SizedBox(height: 40),
-                    SpeedMeter(
-                      currentDelay: _shuffleDelay,
-                      maxDelay: 600.0,
-                      minDelay: 100.0,
-                    ),
-                  ],
-                ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: SpeedMeter(
+                currentDelay: _shuffleDelay,
+                maxDelay: 600.0,
+                minDelay: 100.0,
               ),
             ),
             Padding(
@@ -304,7 +260,7 @@ class _CupSwitchingGameState extends State<CupSwitchingGame>
               child: Text(
                 _showBean
                     ? 'Watch where the bean goes...'
-                    : _isAnimating
+                    : _isShuffling
                     ? 'Watch the cups shuffle...'
                     : _canGuess
                     ? 'Tap the cup with the bean!'
