@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 class SpeedMeter extends StatelessWidget {
   final double currentDelay;
@@ -12,100 +13,135 @@ class SpeedMeter extends StatelessWidget {
     this.minDelay = 0.0,
   });
 
-  List<int> _generateLabels() {
-    final labels = <int>[];
-    final range = maxDelay - minDelay;
-    for (int i = 0; i <= 10; i++) {
-      final labelValue = (minDelay + (i / 10.0) * range).round();
-      labels.add(labelValue);
-    }
-    return labels;
+  double _normalized() {
+    final span = maxDelay - minDelay;
+    if (span <= 0) return 0.5;
+    return ((currentDelay - minDelay) / span).clamp(0.0, 1.0);
   }
 
   @override
   Widget build(BuildContext context) {
-    final labels = _generateLabels();
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          double barWidth = constraints.maxWidth;
-          double normalizedDelay =
-              ((currentDelay - minDelay) / (maxDelay - minDelay)) * 1000.0;
-          double fillPercentage = (1000 - normalizedDelay) / 1000.0;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+    final normalized = _normalized();
+    return SizedBox(
+      height: 200,
+      child: CustomPaint(
+        painter: _SpeedMeterPainter(
+          normalized: normalized,
+          currentDelay: currentDelay,
+          minDelay: minDelay,
+          maxDelay: maxDelay,
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              SizedBox(
-                width: barWidth,
-                height: 20,
-                child: Stack(
-                  children: labels
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                        int index = entry.key;
-                        int label = entry.value;
-                        double availableWidth = barWidth - 36;
-                        double position = (index / 10.0) * availableWidth;
-                        return Positioned(
-                          left: position,
-                          top: 0,
-                          child: Text(
-                            label.toString(),
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        );
-                      })
-                      .toList(),
+              const Text(
+                'Speed',
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${currentDelay.round()} ms',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: barWidth,
-                height: 40,
-                child: Stack(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.grey[600]!,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeOut,
-                        width: fillPercentage * (barWidth - 4),
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: fillPercentage * (barWidth - 4) > (barWidth - 8)
-                              ? BorderRadius.circular(18)
-                              : const BorderRadius.horizontal(
-                                  left: Radius.circular(18),
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 16),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 }
 
+class _SpeedMeterPainter extends CustomPainter {
+  final double normalized;
+  final double currentDelay;
+  final double minDelay;
+  final double maxDelay;
+
+  _SpeedMeterPainter({
+    required this.normalized,
+    required this.currentDelay,
+    required this.minDelay,
+    required this.maxDelay,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height * 0.72);
+    final radius = size.width * 0.38;
+    final startAngle = 210 * pi / 180;
+    final sweepAngle = 120 * pi / 180;
+
+    final basePaint = Paint()
+      ..color = Colors.grey[800]!
+      ..strokeWidth = 12
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Colors.orange, Colors.green],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..strokeWidth = 12
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      basePaint,
+    );
+
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle * (1 - normalized),
+      false,
+      fillPaint,
+    );
+
+    final tickPaint = Paint()
+      ..color = Colors.white38
+      ..strokeWidth = 2;
+
+    for (int i = 0; i <= 6; i++) {
+      final t = i / 6;
+      final angle = startAngle + sweepAngle * (1 - t);
+      final inner = Offset(
+        center.dx + (radius - 10) * cos(angle),
+        center.dy + (radius - 10) * sin(angle),
+      );
+      final outer = Offset(
+        center.dx + (radius + 6) * cos(angle),
+        center.dy + (radius + 6) * sin(angle),
+      );
+      canvas.drawLine(inner, outer, tickPaint);
+    }
+
+    final needleAngle = startAngle + sweepAngle * (1 - normalized);
+    final needleLength = radius - 6;
+    final needlePaint = Paint()
+      ..color = Colors.white
+      ..strokeWidth = 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final needleEnd = Offset(
+      center.dx + needleLength * cos(needleAngle),
+      center.dy + needleLength * sin(needleAngle),
+    );
+
+    canvas.drawLine(center, needleEnd, needlePaint);
+    canvas.drawCircle(center, 6, Paint()..color = Colors.white);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
