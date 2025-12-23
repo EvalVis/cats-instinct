@@ -22,8 +22,16 @@ class SpeedMeter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final normalized = _normalized();
+    final mediaQuery = MediaQuery.of(context);
+    final screenWidth = mediaQuery.size.width;
+    final screenHeight = mediaQuery.size.height;
+
+    final maxSize = min(screenWidth, screenHeight) * 0.4;
+    final size = maxSize.clamp(120.0, 200.0);
+
     return SizedBox(
-      height: 200,
+      width: size,
+      height: size,
       child: CustomPaint(
         painter: _SpeedMeterPainter(
           normalized: normalized,
