@@ -534,20 +534,43 @@ class _ColorMatchGameState extends State<ColorMatchGame> {
               ),
             ),
             Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: _onCenterSquareTap,
-                    child: _buildColorSquare(_centerColor, 200),
-                  ),
-                  const SizedBox(height: 60),
-                  SpeedMeter(
-                    currentDelay: _colorSwitchDelay,
-                    maxDelay: widget.sandbox ? 3000.0 : 1000.0,
-                    minDelay: 100.0,
-                  ),
-                ],
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final mediaQuery = MediaQuery.of(context);
+                  final screenHeight = mediaQuery.size.height;
+                  final screenWidth = mediaQuery.size.width;
+                  
+                  final availableHeight = screenHeight - 
+                      (mediaQuery.padding.top + 
+                       mediaQuery.padding.bottom + 
+                       100);
+                  
+                  final centerSquareSize = min(
+                    screenWidth * 0.35,
+                    availableHeight * 0.3,
+                  ).clamp(150.0, 250.0);
+                  
+                  final spacing = max(
+                    centerSquareSize * 0.3,
+                    screenHeight * 0.05,
+                  ).clamp(40.0, 80.0);
+                  
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: _onCenterSquareTap,
+                        child: _buildColorSquare(_centerColor, centerSquareSize),
+                      ),
+                      SizedBox(height: spacing),
+                      SpeedMeter(
+                        currentDelay: _colorSwitchDelay,
+                        maxDelay: widget.sandbox ? 3000.0 : 1000.0,
+                        minDelay: 100.0,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           ],
