@@ -1,7 +1,7 @@
 name: cats_instinct
-description: "A new Flutter project."
+description: "A game to improve reflexes."
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0+2
 
 environment:
   sdk: ^3.10.1
