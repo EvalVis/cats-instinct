@@ -12,15 +12,18 @@ class HamsterHammerGame extends StatefulWidget {
 
 class _HamsterHammerGameState extends State<HamsterHammerGame> {
   static const int gridSize = 10;
-  final List<List<bool>> _grid = List.generate(
+  static const int hamsterLifetimeMs = 3000;
+  static const int initialHamsterCount = 5;
+  final List<List<DateTime?>> _grid = List.generate(
     gridSize,
-    (_) => List.generate(gridSize, (_) => false),
+    (_) => List.generate(gridSize, (_) => null),
   );
   int _score = 0;
   int _highScore = 0;
   int _timeRemaining = 60;
   Timer? _gameTimer;
   Timer? _hamsterTimer;
+  Timer? _expirationTimer;
   double _spawnDelay = 1500.0;
   final Random _random = Random.secure();
   int? _lastHamsterRow;
@@ -31,14 +34,16 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
     super.initState();
     _loadHighScore();
     _startGameTimer();
-    _spawnHamster();
+    _spawnInitialHamsters();
     _startHamsterTimer();
+    _startExpirationTimer();
   }
 
   @override
   void dispose() {
     _gameTimer?.cancel();
     _hamsterTimer?.cancel();
+    _expirationTimer?.cancel();
     super.dispose();
   }
 
@@ -50,7 +55,7 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
   }
 
   Future<void> _saveHighScore(int score) async {
-    if (score > _highScore) {
+    if (score > 0 && score > _highScore) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('hamster_hammer_high_score', score);
       setState(() {
@@ -82,19 +87,44 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
     );
   }
 
-  void _spawnHamster() {
-    setState(() {
-      for (int row = 0; row < gridSize; row++) {
-        for (int col = 0; col < gridSize; col++) {
-          _grid[row][col] = false;
+  void _startExpirationTimer() {
+    _expirationTimer?.cancel();
+    _expirationTimer = Timer.periodic(
+      const Duration(milliseconds: 100),
+      (timer) {
+        final now = DateTime.now();
+        bool needsUpdate = false;
+        
+        for (int row = 0; row < gridSize; row++) {
+          for (int col = 0; col < gridSize; col++) {
+            if (_grid[row][col] != null) {
+              final age = now.difference(_grid[row][col]!).inMilliseconds;
+              if (age >= hamsterLifetimeMs) {
+                _grid[row][col] = null;
+                needsUpdate = true;
+              }
+            }
+          }
         }
-      }
-    });
+        
+        if (needsUpdate) {
+          setState(() {});
+        }
+      },
+    );
+  }
 
+  void _spawnInitialHamsters() {
+    for (int i = 0; i < initialHamsterCount; i++) {
+      _spawnHamster();
+    }
+  }
+
+  void _spawnHamster() {
     final availablePositions = <List<int>>[];
     for (int row = 0; row < gridSize; row++) {
       for (int col = 0; col < gridSize; col++) {
-        if (row != _lastHamsterRow || col != _lastHamsterCol) {
+        if (_grid[row][col] == null && (row != _lastHamsterRow || col != _lastHamsterCol)) {
           availablePositions.add([row, col]);
         }
       }
@@ -103,9 +133,15 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
     if (availablePositions.isEmpty) {
       for (int row = 0; row < gridSize; row++) {
         for (int col = 0; col < gridSize; col++) {
-          availablePositions.add([row, col]);
+          if (_grid[row][col] == null) {
+            availablePositions.add([row, col]);
+          }
         }
       }
+    }
+
+    if (availablePositions.isEmpty) {
+      return;
     }
 
     availablePositions.shuffle(_random);
@@ -114,27 +150,31 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
     final col = position[1];
 
     setState(() {
-      _grid[row][col] = true;
+      _grid[row][col] = DateTime.now();
       _lastHamsterRow = row;
       _lastHamsterCol = col;
     });
   }
 
   void _onCellTap(int row, int col) {
-    if (_grid[row][col]) {
-      setState(() {
-        _grid[row][col] = false;
+    setState(() {
+      if (_grid[row][col] != null) {
+        _grid[row][col] = null;
         _score++;
         _spawnDelay = (_spawnDelay * 0.98).clamp(500.0, 3000.0);
         _saveHighScore(_score);
-      });
-      _startHamsterTimer();
-    }
+        _startHamsterTimer();
+      } else {
+        _score--;
+        _saveHighScore(_score);
+      }
+    });
   }
 
   void _endGame() {
     _gameTimer?.cancel();
     _hamsterTimer?.cancel();
+    _expirationTimer?.cancel();
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -202,7 +242,7 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
     setState(() {
       for (int row = 0; row < gridSize; row++) {
         for (int col = 0; col < gridSize; col++) {
-          _grid[row][col] = false;
+          _grid[row][col] = null;
         }
       }
       _score = 0;
@@ -212,8 +252,9 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
       _lastHamsterCol = null;
     });
     _startGameTimer();
-    _spawnHamster();
+    _spawnInitialHamsters();
     _startHamsterTimer();
+    _startExpirationTimer();
   }
 
   void _showInstructions(BuildContext context) {
@@ -246,7 +287,7 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
                 const SizedBox(height: 16),
                 _buildInstructionRow(
                   Icons.grid_view,
-                  'Tap hamsters as they appear on the 10x10 grid.',
+                  'Tap hamsters as they appear on the 10x10 grid. Multiple hamsters can appear at once.',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
@@ -257,6 +298,11 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
                 _buildInstructionRow(
                   Icons.speed,
                   'Each catch increases the spawn speed of hamsters.',
+                ),
+                const SizedBox(height: 12),
+                _buildInstructionRow(
+                  Icons.warning,
+                  'Tapping an empty tile loses one point!',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
@@ -306,6 +352,7 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
           onPressed: () {
             _gameTimer?.cancel();
             _hamsterTimer?.cancel();
+            _expirationTimer?.cancel();
             Navigator.pop(context);
           },
         ),
@@ -420,7 +467,7 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
                         itemBuilder: (context, index) {
                           final row = index ~/ gridSize;
                           final col = index % gridSize;
-                          final hasHamster = _grid[row][col];
+                          final hasHamster = _grid[row][col] != null;
 
                           return GestureDetector(
                             onTap: () => _onCellTap(row, col),
