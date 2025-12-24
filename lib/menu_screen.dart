@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'color_match_game.dart';
 import 'cup_switching_game.dart';
+import 'hamster_hammer_game.dart';
 
 enum GameType { colorMatch, cupSwitching }
 
@@ -64,6 +65,15 @@ class _MenuScreenState extends State<MenuScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => const CupSwitchingGame(sandbox: true),
+      ),
+    );
+  }
+
+  void _startHamsterHammer() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const HamsterHammerGame(),
       ),
     );
   }
@@ -185,6 +195,25 @@ class _MenuScreenState extends State<MenuScreen> {
                   ),
                   child: const Text(
                     'Cup Sandbox',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: 200,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _startHamsterHammer,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Hamster & Hammer',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),
