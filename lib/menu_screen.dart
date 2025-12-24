@@ -72,9 +72,7 @@ class _MenuScreenState extends State<MenuScreen> {
   void _startHamsterHammer() {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const HamsterHammerGame(),
-      ),
+      MaterialPageRoute(builder: (context) => const HamsterHammerGame()),
     );
   }
 
@@ -213,7 +211,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     ),
                   ),
                   child: const Text(
-                    'Hamster & Hammer',
+                    'HamHammer',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
                 ),

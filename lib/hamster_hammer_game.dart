@@ -12,19 +12,21 @@ class HamsterHammerGame extends StatefulWidget {
 
 class _HamsterHammerGameState extends State<HamsterHammerGame> {
   static const int gridSize = 10;
-  static const int hamsterLifetimeMs = 3000;
+  static const int initialHamsterLifetimeMs = 3000;
   static const int initialHamsterCount = 5;
+  static const int initialTimerSeconds = 60;
   final List<List<DateTime?>> _grid = List.generate(
     gridSize,
     (_) => List.generate(gridSize, (_) => null),
   );
   int _score = 0;
   int _highScore = 0;
-  int _timeRemaining = 60;
+  int _timeRemaining = initialTimerSeconds;
   Timer? _gameTimer;
   Timer? _hamsterTimer;
   Timer? _expirationTimer;
   double _spawnDelay = 1500.0;
+  double _hamsterLifetimeMs = initialHamsterLifetimeMs.toDouble();
   final Random _random = Random.secure();
   int? _lastHamsterRow;
   int? _lastHamsterCol;
@@ -99,7 +101,7 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
           for (int col = 0; col < gridSize; col++) {
             if (_grid[row][col] != null) {
               final age = now.difference(_grid[row][col]!).inMilliseconds;
-              if (age >= hamsterLifetimeMs) {
+              if (age >= _hamsterLifetimeMs) {
                 _grid[row][col] = null;
                 needsUpdate = true;
               }
@@ -161,12 +163,13 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
       if (_grid[row][col] != null) {
         _grid[row][col] = null;
         _score++;
-        _spawnDelay = (_spawnDelay * 0.98).clamp(500.0, 3000.0);
+        _timeRemaining = initialTimerSeconds;
+        _spawnDelay = (_spawnDelay * 0.99).clamp(200.0, 3000.0);
+        _hamsterLifetimeMs = (_hamsterLifetimeMs * 0.99).clamp(500.0, 3000.0);
         _saveHighScore(_score);
         _startHamsterTimer();
       } else {
-        _score--;
-        _saveHighScore(_score);
+        _score = 0;
       }
     });
   }
@@ -246,8 +249,9 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
         }
       }
       _score = 0;
-      _timeRemaining = 60;
+      _timeRemaining = initialTimerSeconds;
       _spawnDelay = 1500.0;
+      _hamsterLifetimeMs = initialHamsterLifetimeMs.toDouble();
       _lastHamsterRow = null;
       _lastHamsterCol = null;
     });
@@ -292,17 +296,17 @@ class _HamsterHammerGameState extends State<HamsterHammerGame> {
                 const SizedBox(height: 12),
                 _buildInstructionRow(
                   Icons.timer,
-                  'You have 60 seconds to catch as many hamsters as possible.',
+                  'Timer resets to 60 seconds on each successful catch.',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
                   Icons.speed,
-                  'Each catch increases the spawn speed of hamsters.',
+                  'Each successful catch increases game speed by 1% (hamsters spawn and disappear faster).',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
                   Icons.warning,
-                  'Tapping an empty tile loses one point!',
+                  'Tapping an empty tile resets your score to 0!',
                 ),
                 const SizedBox(height: 12),
                 _buildInstructionRow(
